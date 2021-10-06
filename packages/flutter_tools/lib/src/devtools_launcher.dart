@@ -48,22 +48,26 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
 
   io.Process _devToolsProcess;
 
-  static final RegExp _serveDevToolsPattern =
-      RegExp(r'Serving DevTools at ((http|//)[a-zA-Z0-9:/=_\-\.\[\]]+?)\.?$');
+  static final RegExp _serveDevToolsPattern = RegExp(
+      r'Serving DevTools at ((https|http|//)[a-zA-Z0-9:/=_\-\.\[\]]+?)\.?$');
   static const String _pubHostedUrlKey = 'PUB_HOSTED_URL';
 
   static String _devtoolsVersion;
   static String devtoolsVersion(FileSystem fs) {
-    return _devtoolsVersion ??= fs.file(
-      fs.path.join(Cache.flutterRoot, 'bin', 'internal', 'devtools.version'),
-    ).readAsStringSync();
+    return _devtoolsVersion ??= fs
+        .file(
+          fs.path
+              .join(Cache.flutterRoot, 'bin', 'internal', 'devtools.version'),
+        )
+        .readAsStringSync();
   }
 
   @override
   Future<void> get processStart => _processStartCompleter.future;
 
   @override
-  Future<void> launch(Uri vmServiceUri, {List<String> additionalArguments}) async {
+  Future<void> launch(Uri vmServiceUri,
+      {List<String> additionalArguments}) async {
     // Place this entire method in a try/catch that swallows exceptions because
     // this method is guaranteed not to return a Future that throws.
     try {
@@ -100,8 +104,7 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
         // and inform them that the URL was invalid.
         offline = true;
         _logger.printError(
-          'PUB_HOSTED_URL was set to an invalid URL: "${_platform.environment[_pubHostedUrlKey]}".'
-        );
+            'PUB_HOSTED_URL was set to an invalid URL: "${_platform.environment[_pubHostedUrlKey]}".');
       }
 
       bool devToolsActive = await _checkForActiveDevTools();
@@ -132,12 +135,12 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .listen((String line) {
-            final Match match = _serveDevToolsPattern.firstMatch(line);
-            if (match != null) {
-              final String url = match[1];
-              completer.complete(Uri.parse(url));
-            }
-         });
+        final Match match = _serveDevToolsPattern.firstMatch(line);
+        if (match != null) {
+          final String url = match[1];
+          completer.complete(Uri.parse(url));
+        }
+      });
       _devToolsProcess.stderr
           .transform(utf8.decoder)
           .transform(const LineSplitter())
@@ -148,14 +151,17 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
     }
   }
 
-  static final RegExp _devToolsInstalledPattern = RegExp(r'^devtools ', multiLine: true);
+  static final RegExp _devToolsInstalledPattern =
+      RegExp(r'^devtools ', multiLine: true);
 
   /// Check if the DevTools package is already active by running "pub global list".
   Future<bool> _checkForActiveDevTools() async {
     final io.ProcessResult _pubGlobalListProcess = await _processManager.run(
-      <String>[ _pubExecutable, 'global', 'list' ],
+      <String>[_pubExecutable, 'global', 'list'],
     );
-    return _pubGlobalListProcess.stdout.toString().contains(_devToolsInstalledPattern);
+    return _pubGlobalListProcess.stdout
+        .toString()
+        .contains(_devToolsInstalledPattern);
   }
 
   /// Helper method to activate the DevTools pub package.
@@ -170,15 +176,18 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
     const Duration _throttleDuration = Duration(hours: 12);
     if (throttleUpdates) {
       if (_persistentToolState.lastDevToolsActivationTime != null &&
-          DateTime.now().difference(_persistentToolState.lastDevToolsActivationTime) < _throttleDuration) {
-        _logger.printTrace('DevTools activation throttled until ${_persistentToolState.lastDevToolsActivationTime.add(_throttleDuration).toLocal()}.');
+          DateTime.now()
+                  .difference(_persistentToolState.lastDevToolsActivationTime) <
+              _throttleDuration) {
+        _logger.printTrace(
+            'DevTools activation throttled until ${_persistentToolState.lastDevToolsActivationTime.add(_throttleDuration).toLocal()}.');
         return false; // Throttled.
       }
     }
     final Status status = _logger.startProgress('Activating Dart DevTools...');
     try {
-      final io.ProcessResult _devToolsActivateProcess = await _processManager
-          .run(<String>[
+      final io.ProcessResult _devToolsActivateProcess =
+          await _processManager.run(<String>[
         _pubExecutable,
         'global',
         'activate',
@@ -186,10 +195,8 @@ class DevtoolsServerLauncher extends DevtoolsLauncher {
         devtoolsVersion(_fileSystem),
       ]);
       if (_devToolsActivateProcess.exitCode != 0) {
-        _logger.printError(
-          'Error running `pub global activate devtools`:\n'
-          '${_devToolsActivateProcess.stderr}'
-        );
+        _logger.printError('Error running `pub global activate devtools`:\n'
+            '${_devToolsActivateProcess.stderr}');
         return false; // Failed to activate.
       }
       _persistentToolState.lastDevToolsActivation = DateTime.now();
