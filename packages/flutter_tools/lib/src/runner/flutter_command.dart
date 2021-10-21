@@ -219,8 +219,8 @@ abstract class FlutterCommand extends Command<void> {
     argParser.addFlag(
       'web-https',
       defaultsTo: false,
-      help:
-          'Enable using HTTPS under the provided address to serve the web application.',
+      help: 'Enable running web on https by generating a self-signed '
+          'certificates for the browser',
       hide: !verboseHelp,
     );
     argParser.addOption(

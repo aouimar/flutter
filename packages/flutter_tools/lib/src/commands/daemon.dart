@@ -540,7 +540,6 @@ class AppDomain extends Domain {
         Completer<DebugConnectionInfo> connectionInfoCompleter,
         Completer<void> appStartedCompleter,
       }) {
-        globals.printTrace('--> test trace at daemon.dart');
         return runner.run(
           connectionInfoCompleter: connectionInfoCompleter,
           appStartedCompleter: appStartedCompleter,

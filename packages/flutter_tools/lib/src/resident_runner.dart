@@ -452,17 +452,12 @@ class FlutterDevice {
     );
 
     final LaunchResult result = await futureResult;
-    globals.printTrace(
-        '--> test trace (run_hot) result waited on reident_runner.dart for ${device.name}');
-
     if (!result.started) {
       globals.printError('Error launching application on ${device.name}.');
       await stopEchoingDeviceLog();
       return 2;
     }
     if (result.hasObservatory) {
-      globals.printTrace(
-          '--> test trace  observatory uri: ${result.observatoryUri}');
       observatoryUris =
           Stream<Uri>.value(result.observatoryUri).asBroadcastStream();
     } else {

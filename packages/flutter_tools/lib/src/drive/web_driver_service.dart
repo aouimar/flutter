@@ -94,7 +94,6 @@ class WebDriverService extends DriverService {
       enableDevTools: false,
       route: route,
     );
-    globals.printTrace('--> test trace at web_river_service.dart');
     bool isAppStarted = false;
     await Future.any<Object>(<Future<Object>>[
       runFuture.then((int result) {

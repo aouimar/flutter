@@ -260,7 +260,6 @@ class ResidentWebRunner extends ResidentRunner {
     if (device.device is ChromiumDevice) {
       _chromiumLauncher = (device.device as ChromiumDevice).chromeLauncher;
     }
-
     try {
       return await asyncGuard(() async {
         final ExpressionCompiler expressionCompiler = debuggingOptions
@@ -318,8 +317,6 @@ class ResidentWebRunner extends ResidentRunner {
             'uri': url.toString(),
           },
         );
-        _logger.printTrace(
-            '--> test trace at resident_web_runner.dart url : $url');
         return attach(
           connectionInfoCompleter: connectionInfoCompleter,
           appStartedCompleter: appStartedCompleter,
@@ -557,34 +554,23 @@ class ResidentWebRunner extends ResidentRunner {
   }) async {
     if (_chromiumLauncher != null) {
       final Chromium chrome = await _chromiumLauncher.connectedInstance;
-      _logger
-          .printTrace('--> test trace attach function chrome: ${chrome.url}');
       final ChromeTab chromeTab =
           await chrome.chromeConnection.getTab((ChromeTab chromeTab) {
         return !chromeTab.url.startsWith('chrome-extension');
       });
-      _logger.printTrace(
-          '--> test trace attach function chrome: ${chromeTab.url}');
-
       if (chromeTab == null) {
         throwToolExit('Failed to connect to Chrome instance.');
       }
       _wipConnection = await chromeTab.connect();
     }
-    _logger.printTrace(
-        '--> test trace wipconnection resolved: ${_wipConnection.url}');
     Uri websocketUri;
     if (supportsServiceProtocol) {
-      _logger.printTrace(
-          '--> test trace supporsServiceProtocol: $supportsServiceProtocol');
       final WebDevFS webDevFS = device.devFS as WebDevFS;
       final bool useDebugExtension =
           device.device is WebServerDevice && debuggingOptions.startPaused;
       _connectionResult = await webDevFS.connect(useDebugExtension);
       unawaited(_connectionResult.debugConnection.onDone
           .whenComplete(_cleanupAndExit));
-      _logger
-          .printTrace('--> test trace _connectionResult: $_connectionResult');
       void onLogEvent(vmservice.Event event) {
         final String message = processVmServiceMessage(event);
         _logger.printStatus(message);
@@ -592,16 +578,12 @@ class ResidentWebRunner extends ResidentRunner {
 
       _stdOutSub = _vmService.service.onStdoutEvent.listen(onLogEvent);
       _stdErrSub = _vmService.service.onStderrEvent.listen(onLogEvent);
-      _logger.printTrace(
-          '--> test trace _stdOutSub:$_stdOutSub _stdErrSub:$_stdErrSub');
       try {
         await _vmService.service.streamListen(vmservice.EventStreams.kStdout);
       } on vmservice.RPCError {
         // It is safe to ignore this error because we expect an error to be
         // thrown if we're not already subscribed.
       }
-      _logger
-          .printTrace('--> test trace _vmService.service streamListen runned');
       try {
         await _vmService.service.streamListen(vmservice.EventStreams.kStderr);
       } on vmservice.RPCError {
@@ -632,16 +614,12 @@ class ResidentWebRunner extends ResidentRunner {
 
       websocketUri = Uri.parse(_connectionResult.debugConnection.uri);
       device.vmService = _vmService;
-      _logger.printTrace(
-          '--> test trace websocketUri:$websocketUri , _vmService:$_vmService');
       // Run main immediately if the app is not started paused or if there
       // is no debugger attached. Otherwise, runMain when a resume event
       // is received.
       if (!debuggingOptions.startPaused || !supportsServiceProtocol) {
-        _logger.printTrace('--> test trace runMain()');
         _connectionResult.appConnection.runMain();
       } else {
-        _logger.printTrace('--> test trace resumeSub');
         StreamSubscription<void> resumeSub;
         resumeSub =
             _vmService.service.onDebugEvent.listen((vmservice.Event event) {
@@ -651,7 +629,6 @@ class ResidentWebRunner extends ResidentRunner {
           }
         });
       }
-      _logger.printTrace('--> test trace at enableDevTools:$enableDevTools');
       if (enableDevTools) {
         // The method below is guaranteed never to return a failing future.
         unawaited(residentDevtoolsHandler.serveAndAnnounceDevTools(
@@ -660,7 +637,6 @@ class ResidentWebRunner extends ResidentRunner {
         ));
       }
     }
-    _logger.printTrace('--> test trace websocketUri != null: $websocketUri');
     if (websocketUri != null) {
       if (debuggingOptions.vmserviceOutFile != null) {
         _fileSystem.file(debuggingOptions.vmserviceOutFile)

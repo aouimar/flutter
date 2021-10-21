@@ -4,7 +4,12 @@
 
 // @dart = 2.8
 
+// ignore_for_file: unnecessary_brace_in_string_interps
+
 import 'dart:async';
+import 'dart:io' as io;
+import 'dart:isolate';
+import 'package:mkcert/mkcert.dart';
 import 'dart:typed_data';
 
 import 'package:dwds/data/build_result.dart';
@@ -62,7 +67,8 @@ typedef DwdsLauncher = Future<Dwds> Function({
 });
 
 // A minimal index for projects that do not yet support web.
-const String _kDefaultIndex = '''
+const String _kDefaultIndex =
+    '''
 <html>
     <head>
         <base href="/">
@@ -202,16 +208,62 @@ class WebAssetServer implements AssetReader {
     }
     HttpServer httpServer;
     dynamic lastError;
-    for (int i = 0; i < 5; i += 1) {
-      try {
-        httpServer = await HttpServer.bind(
-            address, port ?? await globals.os.findFreePort());
-        break;
-      } on SocketException catch (error) {
-        lastError = error;
-        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    if (useHttps) {
+      final String dir = globals.fs.currentDirectory.uri.path
+          .substring(1)
+          .replaceFirst('%20', ' ');
+      String certPath;
+      final io.Directory certDir = io.Directory('${dir}cert');
+
+      if (certDir.existsSync()) {
+        certPath = certDir.path;
+      } else {
+        final io.Directory certnewdir = await certDir.create(recursive: true);
+        certPath = certnewdir.path;
+      }
+
+      if (!io.File('${certPath}/cert.pem').existsSync() ||
+          !io.File('${certPath}/key.pem').existsSync()) {
+        globals.logger.printTrace('Creating new self signed certificates!!');
+        // ignore: use_raw_strings
+        certPath = certPath.replaceAll(' ', '\\ ');
+        mkcert.MkcertCmdLine(
+            '-cert-file ${certPath}/cert.pem -key-file ${certPath}/key.pem 127.0.0.1');
+      }
+
+      final io.SecurityContext context = io.SecurityContext();
+      // ignore: use_raw_strings
+      final String chain = '$certPath/cert.pem'.replaceAll('\\', '');
+      // ignore: use_raw_strings
+      final String key = '$certPath/key.pem'.replaceAll('\\', '');
+
+      context.useCertificateChain(chain);
+      context.usePrivateKey(key); //, password: 'dartdart');
+
+      for (int i = 0; i < 5; i += 1) {
+        try {
+          httpServer = await HttpServer.bindSecure(
+              address, port ?? await globals.os.findFreePort(), context);
+          break;
+        } on SocketException catch (error) {
+          lastError = error;
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+      }
+    } else {
+      for (int i = 0; i < 5; i += 1) {
+        try {
+          httpServer = await HttpServer.bind(
+              address, port ?? await globals.os.findFreePort());
+          break;
+        } on SocketException catch (error) {
+          lastError = error;
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
       }
     }
+
     if (httpServer == null) {
       throwToolExit('Failed to bind web development server:\n$lastError');
     }
@@ -348,7 +400,6 @@ class WebAssetServer implements AssetReader {
     }
 
     final String requestPath = _stripBasePath(request.url.path, basePath);
-
     if (requestPath == null) {
       return shelf.Response.notFound('');
     }
@@ -706,6 +757,7 @@ class WebDevFS implements DevFS {
         firstConnection.completeError(error, stackTrace);
       }
     });
+    globals.printTrace('returned first connection future');
     return firstConnection.future;
   }
 
@@ -1083,7 +1135,8 @@ String _parseBasePathFromIndexHtml(File indexHtml) {
   return baseHref;
 }
 
-const String basePathExample = '''
+const String basePathExample =
+    '''
 For example, to serve from the root use:
 
     <base href="/">

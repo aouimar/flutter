@@ -146,8 +146,6 @@ abstract class ChromiumDevice extends Device {
         debugPort: debuggingOptions.webBrowserDebugPort,
       );
     }
-    _logger.printTrace(
-        '--> test Trace!! this happening on web_device.dart: url : $url');
     _logger.sendEvent('app.webLaunchUrl',
         <String, dynamic>{'url': url, 'launched': launchChrome});
     return LaunchResult.succeeded(

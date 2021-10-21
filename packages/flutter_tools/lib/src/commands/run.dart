@@ -732,7 +732,6 @@ class RunCommand extends RunCommandBase {
         enableDevTools: stayResident && boolArg(FlutterCommand.kEnableDevTools),
         route: route,
       );
-      globals.printTrace('--> test trace at run.dart');
       handler?.stop();
       if (result != 0) {
         throwToolExit(null, exitCode: result);
