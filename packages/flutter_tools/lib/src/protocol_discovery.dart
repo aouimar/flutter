@@ -88,10 +88,10 @@ class ProtocolDiscovery {
   /// Port forwarding is only attempted when this is invoked,
   /// for each observatory URL in the stream.
   Stream<Uri> get uris {
-    final Stream<Uri> uriStream =
-        _uriStreamController.stream.transform(_throttle<Uri>(
-      waitDuration: throttleDuration,
-    ));
+    final Stream<Uri> uriStream = _uriStreamController.stream
+      .transform(_throttle<Uri>(
+        waitDuration: throttleDuration,
+      ));
     return uriStream.asyncMap<Uri>(_forwardPort);
   }
 
@@ -104,7 +104,7 @@ class ProtocolDiscovery {
   }
 
   Match? _getPatternMatch(String line) {
-    final RegExp r = RegExp(RegExp.escape(serviceName) + r' listening on ((https|http|//)[a-zA-Z0-9:/=_\-\.\[\]]+)');
+    final RegExp r = RegExp(RegExp.escape(serviceName) + r' listening on ((http|//)[a-zA-Z0-9:/=_\-\.\[\]]+)');
     return r.firstMatch(line);
   }
 
@@ -127,8 +127,7 @@ class ProtocolDiscovery {
       return;
     }
     if (devicePort != null && uri.port != devicePort) {
-      _logger.printTrace(
-          'skipping potential observatory $uri due to device port mismatch');
+      _logger.printTrace('skipping potential observatory $uri due to device port mismatch');
       return;
     }
     _uriStreamController.add(uri);
@@ -225,7 +224,8 @@ StreamTransformer<S, S> _throttle<S>({
   Future<void>? throttleFuture;
   bool done = false;
 
-  return StreamTransformer<S, S>.fromHandlers(
+  return StreamTransformer<S, S>
+    .fromHandlers(
       handleData: (S value, EventSink<S> sink) {
         latestLine = value;
 
@@ -253,12 +253,5 @@ StreamTransformer<S, S> _throttle<S>({
         done = true;
         sink.close();
       }
-      sink.add(latestLine);
-      throttleFuture = null;
-      lastExecution = DateTime.now().millisecondsSinceEpoch;
-    });
-  }, handleDone: (EventSink<S> sink) {
-    done = true;
-    sink.close();
-  });
+    );
 }
